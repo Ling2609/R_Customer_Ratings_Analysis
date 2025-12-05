@@ -1,7 +1,3 @@
-Here is your content rewritten cleanly and professionally in **README.md format**, with proper Markdown structure, headings, bullet lists, and formatting.
-
----
-
 # **Retail Customer Satisfaction: Demographic & Geographic Analysis**
 
 This repository contains the R scripts for the individual component of a retail analytics project by **Low Wei Ling (TP080089)**.
