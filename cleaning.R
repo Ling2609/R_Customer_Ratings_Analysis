@@ -1,106 +1,134 @@
-# Load required libraries
+# 1. Loads raw data.
+# 2. Cleans basic formatting (Phone, Text).
+# 3. Filters out invalid logic (Negative money, impossible ages).
+# 4. DROPS all rows with missing data (No Imputation).
+# 5. Organizes columns to match 'complete_data.csv' exactly.
+
 library(dplyr)
 library(stringr)
 
-# Load data
-data <- read.csv("retail_data.csv")
-View(data)
+options(scipen = 999) # No scientific notation
 
-# Clean Transaction_ID and Phone in one pipeline
+# Load Data
+if(file.exists("retail_data.csv")) {
+  data <- read.csv("retail_data.csv", stringsAsFactors = FALSE)
+} else {
+  stop("Error: 'retail_data.csv' not found.")
+}
+
+zip_lengths <- nchar(str_trim(as.character(data$Zipcode)))
+cat("Zipcode Length Distribution:\n")
+print(table(zip_lengths))
+
+empty_country <- sum(data$Country == "" | is.na(data$Country))
+empty_gender  <- sum(data$Gender == "" | is.na(data$Gender))
+
+cat(paste("Rows with missing/empty Country:", empty_country, "\n"))
+cat(paste("Rows with missing/empty Gender: ", empty_gender, "\n"))
+
+raw_ages <- suppressWarnings(as.numeric(data$Age))
+
+cat("Minimum Age found:", min(raw_ages, na.rm = TRUE), "\n")
+cat("Maximum Age found:", max(raw_ages, na.rm = TRUE), "\n")
+
+phones_digits <- gsub("[^0-9]", "", as.character(data$Phone))
+phone_lens <- nchar(phones_digits)
+
+cat("Phone Number Length Distribution:\n")
+print(table(phone_lens))
+
+# Cleaning Pipeline
 clean_data <- data %>%
   mutate(
-    # Clean Phone: Remove non-numeric characters
-    Phone_clean = gsub("[^0-9]", "", Phone),
+    # Clean Phone: Digits only
+    Phone_clean = gsub("[^0-9]", "", as.character(Phone)),
     
-    Country = str_squish(Country),# Remove extra spaces
-    Country = str_to_title(Country), # Capitalize properly
+    # Text Formatting: Title Case & Trim
+    Country = str_to_title(str_squish(Country)),
+    City = str_to_title(str_squish(City)),
+    State = str_to_title(str_squish(State)),
+    Income = str_trim(Income),
     
-    # Convert Age to numeric (in case it's stored as character)
+    # Numeric Safety (Ensure numbers are numbers)
     Age = as.numeric(Age),
+    Amount = as.numeric(Amount),
+    Total_Purchases = as.numeric(Total_Purchases),
+    Total_Amount = as.numeric(Total_Amount),
     
-    # Remove non-numeric characters like $, commas
-    Income = as.numeric(gsub("[^0-9.-]", "", Income)
-    
+    # Convert empty strings "" to NA so na.omit() catches them
+    across(where(is.character), ~na_if(., ""))
   ) %>%
+  
   filter(
-    # Filter Transaction_ID
-    !is.na(Transaction_ID),
-    Transaction_ID != "",
-    !duplicated(Transaction_ID),
+    # Transaction & Phone Validation
+    !is.na(Transaction_ID) & Transaction_ID != "",
     !grepl("[a-zA-Z]", Transaction_ID),
+    !is.na(Phone_clean) & Phone_clean != "",
+    nchar(Phone_clean) >= 7 & nchar(Phone_clean) <= 12,
     
-    # Filter Phone
-    !is.na(Phone_clean),
-    Phone_clean != "",
-    grepl("^[0-9]+$", Phone_clean),
-    nchar(Phone_clean) >= 10,
-    nchar(Phone_clean) <= 12,
+    # Demographics Validation
+    !is.na(City) & City != "",
+    !is.na(State) & State != "",
+    !is.na(Zipcode) & Zipcode != "",
+    nchar(as.character(Zipcode)) >= 4,
+    !is.na(Country) & Country != "",
+    !is.na(Gender) & Gender != "",
+    !is.na(Age) & Age >= 18 & Age <= 100,
+    !is.na(Income) & Income != "",
     
-    # Filter City: Remove NA or empty string
-    !is.na(City),
-    City != "",
+    # Financial Validation
+    !is.na(Total_Purchases) & Total_Purchases > 0,
+    !is.na(Amount) & Amount > 0,
+    !is.na(Total_Amount) & Total_Amount > 0,
     
-    # Filter State: Remove NA or empty string
-    !is.na(State),
-    State != "",
+    # Date Validation (Ensuring all time components exist) 
+    !is.na(Year), !is.na(Month), !is.na(Date), !is.na(Time),
     
-    # Filter Zipcode: Remove non-numeric values and check length
-    !is.na(Zipcode),
-    Zipcode != "",
-    
-    # Filter Country: Remove non-numeric values and check length
-    !is.na(Country),
-    Country != "",
-    
-    # Filter out NA, negative, zero, or implausibly high ages
-    !is.na(Age), 
-    Age > 0, 
-    Age <= 100,
-    Age != "",
-    
-    # Clean Gender column
-    !is.na(Gender),
-    Gender != "",
-    
-    # Clean Income column
-    !is.na(Income),
-    Income != "",
-    Income > 0
-    
+    # Categorical Completeness 
+    !is.na(Customer_Segment), !is.na(Product_Category),
+    !is.na(Product_Brand), !is.na(Product_Type),
+    !is.na(Feedback), !is.na(Shipping_Method),
+    !is.na(Payment_Method), !is.na(Order_Status),
+    !is.na(Ratings), !is.na(products)
   ) %>%
-  arrange(Transaction_ID))
+  
+  # Deduplicate Transactions
+  distinct(Transaction_ID, .keep_all = TRUE) %>%
+  
+  # Sort
+  arrange(Transaction_ID)
 
-# View cleaned data
-View(clean_data)
+# Verification Checks
+cat("\n DATA QUALITY CHECKS \n")
 
-# Optional checks
-cat("Duplicated Transaction_IDs: ", any(duplicated(clean_data$Transaction_ID)), "\n")
-cat("NA in Phone_clean: ", sum(is.na(clean_data$Phone_clean)), "\n")
-cat("Empty Phone_clean: ", sum(clean_data$Phone_clean == ""), "\n")
-cat("NA in City: ", sum(is.na(clean_data$City)), "\n")
-cat("Empty City: ", sum(clean_data$City == ""), "\n")
-cat("NA in State: ", sum(is.na(clean_data$State)), "\n")
-cat("Empty State: ", sum(clean_data$State == ""), "\n")
-cat("NA in Zipcode: ", sum(is.na(clean_data$Zipcode_clean)), "\n")
-cat("Empty Zipcode: ", sum(clean_data$Zipcode_clean == ""), "\n")
-cat("NA values in Country: ", sum(is.na(clean_data$Country)), "\n")
-cat("Empty strings in Country: ", sum(clean_data$Country == ""), "\n")
-cat("Unwanted characters in Country: ", 
-    any(grepl("[^A-Za-z\\s]", clean_data$Country)), "\n")
-cat("Improper capitalization in Country: ", 
-    any(clean_data$Country != str_to_title(clean_data$Country)), "\n")
-cat("NA values in Age: ", sum(is.na(clean_data$Age)), "\n")
-cat("Ages <= 0: ", sum(clean_data$Age <= 0), "\n")
-cat("Ages > 120: ", sum(clean_data$Age > 120), "\n")
-cat("The largest age is:", max(data$Age, na.rm = TRUE), "\n")
-cat("The largest age is:", max(clean_data$Age, na.rm = TRUE), "\n")
-cat("Number of empty strings in Gender:", sum(clean_data$Gender == ""), "\n")
-cat("Number of NA values in Gender:", sum(is.na(clean_data$Gender)), "\n")
-cat("Gender value counts:\n")
-print(table(clean_data$Gender, useNA = "ifany"))
-cat("Unique Gender values:\n")
-print(unique(clean_data$Gender))
-cat("Number of NA values in Income:", sum(is.na(data$Income)), "\n")
-cat("Empty Income: ", sum(data$Income == ""), "\n")
-cat("Number of NA values in Income:", sum(is.na(clean_data$Income)), "\n")
-cat("Empty Income: ", sum(clean_data$Income == ""), "\n")
+# Check ID Consistency
+inconsistent_customers <- clean_data %>%
+  group_by(Customer_ID) %>%
+  summarise(Unique_Names = n_distinct(Name)) %>%
+  filter(Unique_Names > 1)
+
+if(nrow(inconsistent_customers) == 0) {
+  cat("[PASS] Customer IDs are consistent.\n")
+} else {
+  cat(paste("[WARN]", nrow(inconsistent_customers), "IDs have multiple names.\n"))
+}
+
+# Math Logic
+math_errors <- clean_data %>%
+  mutate(Calc = Amount * Total_Purchases, Diff = abs(Total_Amount - Calc)) %>%
+  filter(Diff > 1.00)
+
+cat(paste("Rows with Math Discrepancies:", nrow(math_errors), "\n"))
+
+cat("\n SAVING DATA \n")
+
+final_output <- clean_data %>%
+  select(-Transaction_ID, -Customer_ID, -Name, -Email, -Phone, -Phone_clean, -Address, -Zipcode)%>%
+  mutate(across(where(is.character), ~na_if(., ""))) %>%
+  na.omit()
+
+cat("Original Rows:", nrow(data), "\n")
+cat("Cleaned Rows: ", nrow(final_output), "\n")
+
+write.csv(final_output, "complete_data_recreated.csv", row.names = FALSE)
+cat("File saved successfully: complete_data_recreated.csv\n")
