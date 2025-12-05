@@ -1,6 +1,15 @@
+# Ignore data files
+*.csv
+*.xlsx
+
+# Ignore large model files
+*.rds
+*.RData
+
+# Ignore R project user settings
 .Rproj.user
+
 .Rhistory
-.RData
 .httr-oauth
 .DS_Store
 .quarto
