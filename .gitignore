@@ -1,6 +1,8 @@
 # Ignore data files
-*.csv
 *.xlsx
+
+# Ignore ONLY the large dataset
+complete_data.csv
 
 # Ignore large model files
 *.rds
