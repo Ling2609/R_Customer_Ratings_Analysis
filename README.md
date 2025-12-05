@@ -1,97 +1,174 @@
-Retail Customer Satisfaction: Demographic & Geographic Analysis
+Here is your content rewritten cleanly and professionally in **README.md format**, with proper Markdown structure, headings, bullet lists, and formatting.
 
-📌 Project Context
+---
 
-This repository contains the R code and logic for the individual component of a retail data science project developed by Low Wei Ling (TP080089). Due to file size constraints, the dataset files are not hosted here.
+# **Retail Customer Satisfaction: Demographic & Geographic Analysis**
 
-This work serves as the Data Engineering foundation (Strict Pipeline) and the Lead Analysis for Objective 2, focusing on two core areas:
+This repository contains the R scripts for the individual component of a retail analytics project by **Low Wei Ling (TP080089)**.
 
-Robust Data Engineering: Developing a strict, integrity-focused data cleaning pipeline.
+Because of file size limits, the dataset files are **not included** in this repository. You must provide the raw dataset locally to run the scripts.
 
-Demographic & Geographic Analytics: Investigating how customer age, income, gender, and location influence satisfaction ratings.
+The project covers two major components:
 
-📂 Repository Contents
+* **Strict Data Engineering Pipeline** (high-integrity cleaning, no imputation)
+* **Demographic & Geographic Analysis** (Objective 2 of the project)
 
-File
+---
 
-Description
+## 📁 **Repository Structure**
 
-cleaning.R
+| File                        | Description                                                                                                                                               |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **cleaning.R**              | Strict Cleaning Pipeline: A full validation and cleaning script enforcing data consistency, removing invalid records, and producing a 100% clean dataset. |
+| **TP080089 LOW WEI LING.R** | Individual Analysis Script: Performs demographic & geographic analysis for Objective 2.                                                                   |
 
-The Strict Cleaning Pipeline. A robust R script that validates data boundaries, enforces logic, and removes incomplete records to ensure 100% data integrity without imputation.
+> ⚠️ **Data files (retail_data.csv, complete_data.csv, complete_data_recreated.csv) are NOT included** because of size limitations.
+> Place them in the root folder manually before running the scripts.
 
-TP080089 LOW WEI LING.R
+---
 
-Individual Analysis Script. The specific analysis code focusing on Objective 2 (Demographics & Geographics).
+## 🛠️ **Part 1: Strict Data Cleaning Pipeline (cleaning.R)**
 
-⚠️ Note on Data Files:
-The raw data (retail_data.csv) and processed data (complete_data.csv and complete_data_recreated.csv) are excluded from this repository due to large file sizes. To run the code, you must have the raw data file saved locally.
+The pipeline applies a **Strict Validation Approach**, meaning:
 
-🛠️ Part 1: The Data Cleaning Pipeline (cleaning.R)
+* ❌ No guessing
+* ❌ No imputing
+* ❌ No statistical filling
 
-This project implements a "Strict Validation" approach. Unlike methods that guess missing values (Imputation), this pipeline prioritizes data authenticity by removing any rows with missing or inconsistent data.
+Instead, it aims for **true data integrity** by removing invalid or inconsistent rows.
 
-Key Validation Steps:
+### ✅ **Key Validation Features**
 
-Diagnostics: Pre-calculation of min/max/counts to scientifically justify filtering boundaries (e.g., proving why Zipcodes < 4 digits are errors).
+#### **1. Diagnostics First**
 
-Logic Enforcement:
+Before cleaning begins, the pipeline computes:
 
-Financials: Verifies Total_Amount matches Price * Quantity.
+* Min/max distributions
+* Frequency counts
+* Outlier checks
 
-Demographics: Filters for realistic ranges (e.g., Age 18-100).
+This provides scientific justification for cleaning boundaries
+(e.g., proving that *Zipcodes shorter than 4 digits* are statistically incorrect).
 
-Formats: Standardizes text to Title Case (e.g., "new york" → "New York").
+#### **2. Logic Enforcement**
 
-Zero-Tolerance Policy: The pipeline ends with a final audit to guarantee the output file has 0 NAs and 0 empty strings.
+**Financial rules**
 
-📊 Part 2: Individual Analysis (TP080089 LOW WEI LING.R)
+* Ensures
+  `Total_Amount ≈ Amount × Total_Purchases`
+* Flags and removes financial inconsistencies
 
-This analysis investigates the question: "Which demographic and geographic factors actually drive customer ratings?"
+**Demographic rules**
 
-🔍 Key Findings
+* Age must be within **18–100**
+* Zipcode length must be **4–5 digits**
+* Phone length **10–12 digits**
 
-Age is the Dominant Factor:
+**Format standardization**
 
-Statistical testing (Chi-Square & Cramér’s V) identified Age as the strongest predictor of customer satisfaction.
+* Title Case applied to all location fields
+  (“new york” → **“New York”**)
+* Whitespace trimmed
+* Empty strings converted to NA
 
-Insight: Older customers (46+) consistently provide higher ratings compared to younger demographics (18-25).
+#### **3. Zero-Tolerance Data Integrity**
 
-Income Paradox:
+At the end of the pipeline:
 
-Contrary to expectations, higher income levels showed a weak negative correlation with ratings, suggesting affluent customers may have higher service expectations.
+* 0 missing values
+* 0 empty strings
+* 0 invalid formats
+* 0 corrupted financial rows
 
-Geography's Limited Impact:
+The output is a strictly clean dataset suitable for analysis.
 
-While variation exists between countries (e.g., Canada vs. USA), spatial analysis confirms that location is a weaker driver of satisfaction compared to demographic factors.
+---
 
-🚀 How to Run the Code
+## 📊 **Part 2: Demographic & Geographic Analysis (TP080089 LOW WEI LING.R)**
 
-1. Prerequisites
+This component investigates:
 
-Ensure the following R libraries are installed:
+> **Which demographic and geographic factors influence customer satisfaction ratings?**
 
-install.packages(c("dplyr", "stringr", "ggplot2", "vcd", "caret", "randomForest", "xgboost", "leaflet", "sf", "rnaturalearth", "rnaturalearthdata"))
+### 🔍 **Major Findings**
 
+#### ⭐ **1. Age is the Most Influential Predictor**
 
-2. Setup Data
+Using **Chi-Square** and **Cramér’s V**, age showed the strongest relationship with customer ratings.
 
-Since the data is not in the repo, place the raw retail_data.csv file into the root folder of this project on your local machine.
+* Older customers (**46+**) report higher satisfaction
+* Younger customers (**18–25**) tend to rate lower
 
-3. Execution Order
+#### 💸 **2. The Income Paradox**
 
-Step A: Generate the Clean Data
-Run the cleaning pipeline first. This will process the raw file and create the clean dataset locally.
+Higher income groups show **slightly lower satisfaction**, suggesting:
 
+* Wealthier customers have higher expectations
+* They are more critical of service quality
+
+#### 🌍 **3. Geography Has a Smaller Impact**
+
+While there are differences across locations (e.g., Canada vs. USA):
+
+* Demographics influence satisfaction **more than** geography
+* Spatial factors explain much less variance than age or income
+
+---
+
+## 🚀 **How to Run This Project**
+
+### **1. Install Required Libraries**
+
+```r
+install.packages(c(
+  "dplyr", "stringr", "ggplot2", "vcd", "caret",
+  "randomForest", "xgboost", "leaflet", "sf",
+  "rnaturalearth", "rnaturalearthdata"
+))
+```
+
+---
+
+### **2. Prepare the Data**
+
+Place the raw file:
+
+```
+retail_data.csv
+```
+
+in the **root directory** of this project.
+
+---
+
+### **3. Run the Cleaning Pipeline**
+
+This generates the fully cleaned dataset:
+
+```r
 source("cleaning.R")
+```
 
+Output:
 
-Output: A new file named complete_data_recreated.csv will be generated in your folder.
+```
+complete_data_recreated.csv
+```
 
-Step B: Run the Analysis
-Once the clean file exists, run the analysis script.
+---
 
+### **4. Run the Analysis Script**
+
+Once the cleaned data exists, run:
+
+```r
 source("TP080089 LOW WEI LING.R")
+```
 
+This produces:
 
-Output: This will generate the summary tables, statistical test results, and visualizations used in the report.
+* Summary tables
+* Statistical test results
+* Visualizations
+* Interpretation outputs used in your report
+
