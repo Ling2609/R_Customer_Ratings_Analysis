@@ -3,6 +3,7 @@
 
 # Ignore ONLY the large dataset
 complete_data.csv
+retail_data.csv
 
 # Ignore large model files
 *.rds
